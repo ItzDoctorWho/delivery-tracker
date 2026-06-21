@@ -1,0 +1,5 @@
+node_modules/
+api-gateway/node_modules
+delivery-service/node_modules
+driver-service/node_modules
+order-service/node_modules
