@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Proto paths
 const DELIVERY_PROTO_PATH = path.join(__dirname, '../../proto/delivery.proto');
+const topics = require('../../proto/topics');
 const DRIVER_PROTO_PATH = path.join(__dirname, '../../proto/driver.proto');
 const ORDER_PROTO_PATH = path.join(__dirname, '../../proto/order.proto');
 
@@ -111,7 +112,7 @@ async function createDelivery(call, callback) {
     await updateOrderStatus(order_id, 'ASSIGNED');
 
     await db.deliveries.insert(delivery);
-    await publishEvent('delivery.created', delivery);
+    await publishEvent(topics.DELIVERY_CREATED, delivery);
 
     callback(null, delivery);
   } catch (err) {
@@ -167,7 +168,7 @@ async function updateDeliveryStatus(call, callback) {
     }
 
     const updated = await doc.patch(patch);
-    await publishEvent('delivery.updated', updated.toJSON());
+    await publishEvent(topics.DELIVERY_UPDATED, updated.toJSON());
     callback(null, updated.toJSON());
   } catch (err) {
     callback({
@@ -215,13 +216,13 @@ async function startKafka() {
     const admin = kafka.admin();
     await admin.connect();
     await admin.createTopics({
-      topics: [{ topic: 'order.created' }]
+      topics: [{ topic: topics.ORDER_CREATED }]
     });
     await admin.disconnect();
     
     await producer.connect();
     await consumer.connect();
-    await consumer.subscribe({ topic: 'order.created', fromBeginning: true });
+    await consumer.subscribe({ topic: topics.ORDER_CREATED, fromBeginning: true });
     
     console.log('Kafka Consumer & Producer in Delivery Service connected successfully.');
     
@@ -251,7 +252,7 @@ async function startKafka() {
             await updateDriverStatus(driver.id, 'BUSY');
             await updateOrderStatus(order.id, 'ASSIGNED');
             await db.deliveries.insert(delivery);
-            await publishEvent('delivery.created', delivery);
+            await publishEvent(topics.DELIVERY_CREATED, delivery);
             
             console.log(`[Auto-Assign] Successfully assigned driver ${driver.id} to order ${order.id}`);
           } else {

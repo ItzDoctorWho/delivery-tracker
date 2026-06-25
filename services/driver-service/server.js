@@ -6,6 +6,7 @@ const { Kafka, logLevel } = require('kafkajs');
 const { v4: uuidv4 } = require('uuid');
 
 const PROTO_PATH = path.join(__dirname, '../../proto/driver.proto');
+const topics = require('../../proto/topics');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
   longs: String,
@@ -57,7 +58,7 @@ async function createDriver(call, callback) {
       longitude: 0.0
     };
     await db.drivers.insert(driver);
-    await publishEvent('driver.created', driver);
+    await publishEvent(topics.DRIVER_CREATED, driver);
     callback(null, driver);
   } catch (err) {
     callback({
@@ -98,7 +99,7 @@ async function updateDriverLocation(call, callback) {
       });
     }
     const updated = await doc.patch({ latitude, longitude });
-    await publishEvent('driver.location_updated', updated.toJSON());
+    await publishEvent(topics.DRIVER_LOCATION_UPDATED, updated.toJSON());
     callback(null, updated.toJSON());
   } catch (err) {
     callback({
@@ -120,7 +121,7 @@ async function updateDriverStatus(call, callback) {
       });
     }
     const updated = await doc.patch({ status });
-    await publishEvent('driver.status_updated', updated.toJSON());
+    await publishEvent(topics.DRIVER_STATUS_UPDATED, updated.toJSON());
     callback(null, updated.toJSON());
   } catch (err) {
     callback({

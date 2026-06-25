@@ -1,5 +1,6 @@
 const { createRxDatabase } = require('rxdb');
-const { getRxStorageMemory } = require('rxdb/plugins/storage-memory');
+const { getRxStorageLoki } = require('rxdb/plugins/storage-lokijs');
+const LokiFsStructuredAdapter = require('lokijs/src/loki-fs-structured-adapter.js');
 
 const orderSchema = {
   title: 'order schema',
@@ -26,7 +27,9 @@ async function getDB() {
     dbPromise = (async () => {
       const db = await createRxDatabase({
         name: 'orderdb',
-        storage: getRxStorageMemory()
+        storage: getRxStorageLoki({
+          adapter: new LokiFsStructuredAdapter()
+        })
       });
       await db.addCollections({
         orders: {

@@ -6,6 +6,7 @@ const { Kafka, logLevel } = require('kafkajs');
 const { v4: uuidv4 } = require('uuid');
 
 const PROTO_PATH = path.join(__dirname, '../../proto/order.proto');
+const topics = require('../../proto/topics');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
   longs: String,
@@ -60,7 +61,7 @@ async function createOrder(call, callback) {
     };
 
     await db.orders.insert(order);
-    await publishEvent('order.created', order);
+    await publishEvent(topics.ORDER_CREATED, order);
     callback(null, order);
   } catch (err) {
     callback({
@@ -101,7 +102,7 @@ async function updateOrderStatus(call, callback) {
       });
     }
     const updated = await doc.patch({ status });
-    await publishEvent('order.status_updated', updated.toJSON());
+    await publishEvent(topics.ORDER_STATUS_UPDATED, updated.toJSON());
     callback(null, updated.toJSON());
   } catch (err) {
     callback({
